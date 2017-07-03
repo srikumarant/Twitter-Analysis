@@ -1,0 +1,113 @@
+sudo su - hdfs
+hadoop dfsadmin -safemode leave
+set hive.support.sql11.reserved.keywords=false;
+set hive.cli.print.header=true;
+set hive.execution.engine=mr;
+set mapreduce.job.reduces=1;
+set mapred.map.tasks=5;
+
+--
+
+#Tweets:
+
+SELECT id, text 
+FROM tweets;
+
+--
+
+#No. of Tweets:
+
+SELECT COUNT(id) 
+FROM tweets;
+
+--
+
+#No. of Tweets with USA, India, UK:
+
+SELECT "USA" AS Keyword, COUNT(text) AS Count
+FROM tweets 
+WHERE LOWER(text) LIKE '%usa%'
+UNION
+SELECT "UK" AS Keyword, COUNT(text) AS Count
+FROM tweets 
+WHERE LOWER(text) LIKE '%uk%'
+UNION
+SELECT "India" AS Keyword, COUNT(text) AS Count
+FROM tweets 
+WHERE LOWER(text) LIKE '%india%'
+UNION
+SELECT "Other" AS Keyword, COUNT(text) AS Count
+FROM tweets 
+WHERE     LOWER(text) NOT LIKE '%india%'
+      AND LOWER(text) NOT LIKE '%uk%'
+      AND LOWER(text) NOT LIKE '%usa%'
+ORDER BY Count DESC;
+
+--
+
+#User who has the most number of followers: 
+
+SELECT user.screen_name, user.followers_count c 
+FROM tweets
+ORDER BY c DESC;
+
+--
+
+#User details:
+
+SELECT user.name, user.friends_count, user.followers_count, user.statuses_count, user.verified, from_unixtime(user.utc_offset), user.time_zone 
+FROM tweets;
+
+--
+
+#User Timezone:
+
+SELECT
+ user.time_zone,
+ SUBSTR(created_at, 0, 3),
+ COUNT(*) AS total_count
+FROM tweets
+WHERE user.time_zone IS NOT NULL
+GROUP BY
+ user.time_zone,
+ SUBSTR(created_at, 0, 3)
+ORDER BY total_count DESC;
+
+--
+
+#Hashtags:
+
+SELECT
+ LOWER(hashtags.text),
+ COUNT(*) AS total_count
+FROM tweets
+LATERAL VIEW EXPLODE(entities.hashtags) t1 AS hashtags
+GROUP BY LOWER(hashtags.text)
+ORDER BY total_count DESC;
+
+--
+
+#Top people reply to:
+
+SELECT in_reply_to_screen_name, 
+       COUNT(*) AS total 
+FROM tweets 
+GROUP BY in_reply_to_screen_name 
+ORDER BY total DESC;
+
+--
+
+#N-Gram Analysis:
+
+SELECT ngrams(sentences(lower(text)), 3, 10) FROM tweets;
+
+--
+
+#Re-Tweets:
+
+SELECT retweeted_status.user.screen_name, COUNT(*) AS total 
+FROM tweets 
+WHERE retweeted_status.user IS NOT null 
+GROUP BY retweeted_status.user.screen_name 
+ORDER BY total DESC;
+

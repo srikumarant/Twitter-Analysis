@@ -1,0 +1,42 @@
+01. Access Key/Token
+https://apps.twitter.com/app/13899525/show
+
+02. Sync Clock
+yum install ntp
+chkconfig ntpd on
+ntpdate pool.ntp.org
+/etc/init.d/ntpd start
+
+03. API Status
+https://dev.twitter.com/overview/status
+
+04. Twitter Conf File
+twitter.conf
+
+05. Start Conf file
+flume-ng agent --name TwitterAgent \
+--conf conf \
+--conf-file /root/lab/twitter.conf \
+-Dtwitter4j.streamBaseURL=https://stream.twitter.com/1.1/ 
+
+06. Setup Hive
+cd /usr/hdp/2.5.0.0-1245/hive/lib
+wget http://files.cloudera.com/samples/hive-serdes-1.0-SNAPSHOT.jar
+wget http://www.congiu.net/hive-json-serde/1.3.7/cdh5/json-serde-1.3.7-jar-with-dependencies.jar
+
+hive> ADD JAR /usr/hdp/2.5.0.0-1245/hive/lib/hive-serdes-1.0-SNAPSHOT.jar;
+hive> ADD JAR /usr/hdp/2.5.0.0-1245/hive/lib/json-serde-1.3.7-jar-with-dependencies.jar;
+
+06. Create Hive Table
+hive -hiveconf TAB='tweets' -f createtweetstable.hive
+
+07. Load Hive Tables
+hive -hiveconf TAB='tweets' -f loadtweets.hive
+
+08. Merge Hive Files
+Ex.: hadoop fs -getmerge /apps/hive/warehouse/tweets_user/ /root/lab/tweets/tweets_user.txt
+
+09. Push to HDFS
+Ex.: hadoop fs -put -f tweets*out.txt /user/root/lab/tweets/output
+
+10. Create Viz
